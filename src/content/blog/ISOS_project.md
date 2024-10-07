@@ -2,8 +2,8 @@
 author: Gabin Le Saout
 pubDatetime: 2024-10-07T15:44:00Z
 title: Binary code injection
-draft: true
-tags:
+tags: 
+  - WIP
   - school_projects
 description: This article will describe the project done during ISOS at school
 ---
@@ -11,6 +11,7 @@ description: This article will describe the project done during ISOS at school
 This project has been done during the ISOS lab lessons. The objective was to inject some code and execute it into a give ELF binary. It is not binary dependant, as long as it is an ELF one it should work. 
 
 To help us conducting this, the steps have been divided into multiple challenges. Here they are :
+
 1. Initializing things
 2. Finding the PT_NOTE segment header
 3. Inject the malicious code
@@ -18,3 +19,69 @@ To help us conducting this, the steps have been divided into multiple challenges
 5. Reorder the section headers
 6. Overwriting the PT_NOTE program header
 7. Execute the injected code
+
+# Initializing things
+First we need to create our C file and write the argument parsing part. We needed to do it using `argp()`, handling the necessary files and a `--help`.
+This part have been done into a dedicated C file named `arg_parser.c`. 
+
+There are some requirements to make it work :
+- Variables to describe how we want arguments to be given
+```C
+static char doc[] =
+    "ISOS project";
+
+static char args_doc[] = "-e <elf_file> -c <code_section> -b <base_address> -m <modify-entry>";
+
+/**
+ * @brief Describes the options our program needs to understand
+ *
+ */
+static struct argp_option options[] = {
+    {"elf", 'e', "ELF_FILE", 0, "The ELF file to be analyzed", 0},
+    {"code", 'c', "CODE_FILE", 0, "The binary file containing the machine code to be injected", 0},
+    {"section", 's', "SECTION_NAME", 0, "The name of the newly created section", 0},
+    {"base", 'b', "BASE_ADDRESS", 0, "The base address of the injected code", 0},
+    {"modify-entry", 'm', 0, 0, "Modify the entry function or not", 0},
+    {0}};
+```
+- A switch case to code what to do for each given parameter
+```C
+static error_t
+parse_opt(int key, char *arg, struct argp_state *state)
+{
+    struct arguments *arguments = state->input;
+
+    switch (key)
+    {
+    case 'e':
+        //I use directly = since arguments are stored into the main stack frame
+        arguments->elf_filename = arg;
+        break;
+    case 'c':
+        arguments->injected_code_filename = arg;
+        break;
+    case 's':
+        arguments->section_name = arg;
+        break;
+    case 'b':
+        arguments->base_address = strtoul(arg, NULL, 16);
+        break;
+    case 'm':
+        arguments->should_modify_entry_point = 1;
+        break;
+    default:
+        return ARGP_ERR_UNKNOWN;
+    }
+    return EXIT_SUCCESS;
+}
+```
+- The function that will start all this process
+```C
+void parse_arguments(struct arguments *arguments, int argc, char **argv)
+{
+    // Parse arguments
+    error_t return_code = argp_parse(&argp, argc, argv, 0, 0, arguments);
+    if (return_code != 0)
+        errx(EXIT_FAILURE, "Bad return code for argp_parse()");
+}
+```
