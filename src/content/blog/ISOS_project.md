@@ -23,7 +23,7 @@ This part have been done into a dedicated C file named `arg_parser.c`.
 
 There are some requirements to make it work :
 - Variables to describe how we want arguments to be given
-```C
+```c
 static char doc[] = "ISOS project";
 
 static char args_doc[] = "-e <elf_file> -c <code_section> -b <base_address> -m <modify-entry>";
@@ -41,7 +41,7 @@ static struct argp_option options[] = {
     {0}};
 ```
 - A switch case to code what to do for each given parameter
-```C
+```c
 static error_t
 parse_opt(int key, char *arg, struct argp_state *state)
 {
@@ -72,7 +72,7 @@ parse_opt(int key, char *arg, struct argp_state *state)
 }
 ```
 - The function that will start all this process
-```C
+```c
 void parse_arguments(struct arguments *arguments, int argc, char **argv)
 {
     // Parse arguments
