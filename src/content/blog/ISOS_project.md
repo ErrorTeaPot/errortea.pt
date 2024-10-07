@@ -2,12 +2,15 @@
 author: Gabin Le Saout
 pubDatetime: 2024-10-07T15:44:00Z
 title: Binary code injection
+slug: binary-code-injection
+featured: true
+draft: false
 tags: 
   - WIP
   - school_projects
 description: This article will describe the project done during ISOS at school
 ---
-
+# Introduction
 This project has been done during the ISOS lab lessons. The objective was to inject some code and execute it into a given ELF binary. It is not binary dependant, as long as it is an ELF one it should work. 
 
 To help us conducting this, the steps have been divided into multiple challenges. I am following this structure for this article
