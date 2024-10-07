@@ -8,27 +8,21 @@ tags:
 description: This article will describe the project done during ISOS at school
 ---
 
-This project has been done during the ISOS lab lessons. The objective was to inject some code and execute it into a give ELF binary. It is not binary dependant, as long as it is an ELF one it should work. 
+This project has been done during the ISOS lab lessons. The objective was to inject some code and execute it into a given ELF binary. It is not binary dependant, as long as it is an ELF one it should work. 
 
-To help us conducting this, the steps have been divided into multiple challenges. Here they are :
+To help us conducting this, the steps have been divided into multiple challenges. I am following this structure for this article
 
-1. Initializing things
-2. Finding the PT_NOTE segment header
-3. Inject the malicious code
-4. Overwriting a section header
-5. Reorder the section headers
-6. Overwriting the PT_NOTE program header
-7. Execute the injected code
+## Table of contents
 
 # Initializing things
+## Arguments
 First we need to create our C file and write the argument parsing part. We needed to do it using `argp()`, handling the necessary files and a `--help`.
 This part have been done into a dedicated C file named `arg_parser.c`. 
 
 There are some requirements to make it work :
 - Variables to describe how we want arguments to be given
 ```C
-static char doc[] =
-    "ISOS project";
+static char doc[] = "ISOS project";
 
 static char args_doc[] = "-e <elf_file> -c <code_section> -b <base_address> -m <modify-entry>";
 
@@ -85,3 +79,29 @@ void parse_arguments(struct arguments *arguments, int argc, char **argv)
         errx(EXIT_FAILURE, "Bad return code for argp_parse()");
 }
 ```
+## Verifying the target
+Our program is supposed to work on 64-bits executable ELF binaries. To perform this verification, we are using `libbfd`.
+> BFD is a package which allows applications to use the same routines to operate on object files whatever the object file format. A new object file format can be supported simply by creating a new BFD back end and adding it to the library. 
+```c
+int is_exploitable(struct arguments *arguments)
+{
+    bfd_init();
+
+    bfd *elf_bfd = bfd_openr(arguments->elf_filename, NULL);
+    if (elf_bfd == NULL)
+        errx(EXIT_FAILURE, "Failed to open elf file using bfd_open()");
+
+    // Check if the file is an ELF binary
+    int is_an_ELF_bin = bfd_check_format(elf_bfd, bfd_object);
+    int is_64bits = bfd_get_arch_size(elf_bfd) == 64;
+    int is_executable = bfd_get_file_flags(elf_bfd) & EXEC_P;
+
+    bfd_close(elf_bfd);
+
+    if (is_an_ELF_bin && is_64bits && is_executable)
+        return 1;
+    else
+        return 0;
+}
+```
+The 3 required checking are done into those 3 functions. 
