@@ -34,17 +34,22 @@ decrypt the master key copy corresponding to the used user key.
 Now that we have in mind how keys are overall managed (I am not a crypto expert)
 , how are operations performed when the OS is running ?
 
-First we need to understand what **block devices** are.
-Quoting from [Wikipedia's device file page](https://en.wikipedia.org/wiki/Device_file#BLOCKDEV) :
+LUKS uses [cryptsetup](https://gitlab.com/cryptsetup), a front-end to [dm-crypt](https://docs.kernel.org/admin-guide/device-mapper/dm-crypt.html), to handle the crypto operations.
+It is a binary that avoid the user to interact with the kernel directly.
+This tool uses block devices (disks here) available in `/dev/sdaX` for example.
 
-> Block special files or block devices provide buffered access to hardware
-> devices, and provide some abstraction from their specifics. [...] block
-> devices will always allow the programmer to read or write a block of any size
-> (including single characters/bytes) and any alignment.
+When can take a look at the underlying system calls using `strace` for a better understanding :
 
-So it is a provided abstraction that makes the interractions with hardware
-easier.
-Device files in general are interfaces exposed by the kernel that apperears as
-ordinary files in a filesystem.
+```bash
+🌶️  sudo strace cryptsetup status luks-xxxxxxx-<...>
+[...]
+openat(AT_FDCWD, "/dev/sda3", O_RDONLY|O_DIRECT) = 4
+[...]
+ioctl(4, BLKSSZGET, [512])              = 0
+close(4)                                = 0
+[...]
+```
+
+Among all the other things, `cryptsetup` opens our block device and uses `ioctl()` on it to gather information.
 
 ## TPM 101
